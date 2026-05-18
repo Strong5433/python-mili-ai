@@ -1,0 +1,113 @@
+name: python-ai-mother
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: python-ai-mother-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ../../backend/monolith
+      dockerfile: Dockerfile
+    container_name: python-ai-mother-backend
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      APP_NAME: python-ai-mother-backend
+      APP_VERSION: 0.1.0
+      DEBUG: "false"
+      LOG_LEVEL: INFO
+      CORS_ORIGINS: "*"
+      DATABASE_URL: sqlite+aiosqlite:////data/python_ai_mother.db
+      REDIS_URL: redis://redis:6379/0
+      GENERATED_CODE_DIR: /data/generated
+      DEPLOY_DOMAIN: http://localhost:8123/api/static
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL_NAME: ${LLM_MODEL_NAME:-gpt-4o-mini}
+      LLM_STREAM: ${LLM_STREAM:-true}
+      LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-180}
+      LLM_RETRY_COUNT: ${LLM_RETRY_COUNT:-1}
+      AI_CONCURRENCY_LIMIT: ${AI_CONCURRENCY_LIMIT:-4}
+      LLM_MAX_PROMPT_CHARS: ${LLM_MAX_PROMPT_CHARS:-12000}
+      PROMPT_BLOCK_KEYWORDS: ${PROMPT_BLOCK_KEYWORDS:-rm -rf,删库,提权,System prompt}
+      APP_QUERY_CACHE_TTL_SECONDS: ${APP_QUERY_CACHE_TTL_SECONDS:-30}
+      CHAT_RATE_LIMIT_COUNT: ${CHAT_RATE_LIMIT_COUNT:-20}
+      CHAT_RATE_LIMIT_WINDOW_SECONDS: ${CHAT_RATE_LIMIT_WINDOW_SECONDS:-60}
+    ports:
+      - "8123:8123"
+    volumes:
+      - backend_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8123/api/health/"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8123/api}
+        VITE_DEPLOY_DOMAIN: ${VITE_DEPLOY_DOMAIN:-http://localhost:8123/api/static}
+    container_name: python-ai-mother-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "5173:80"
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: python-ai-mother-prometheus
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+
+  grafana:
+    image: grafana/grafana:11.1.4
+    container_name: python-ai-mother-grafana
+    restart: unless-stopped
+    depends_on:
+      prometheus:
+        condition: service_started
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/provisioning/dashboards/json/python-ai-mother-overview.json
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+
+volumes:
+  redis_data:
+  backend_data:
+  prometheus_data:
+  grafana_data:

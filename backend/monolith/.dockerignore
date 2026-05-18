@@ -1,0 +1,9 @@
+.venv
+__pycache__
+.pytest_cache
+.mypy_cache
+*.pyc
+generated
+python_ai_mother.db
+python_ai_mother.db-shm
+python_ai_mother.db-wal

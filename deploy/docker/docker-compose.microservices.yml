@@ -1,0 +1,58 @@
+name: python-ai-mother-micro
+
+services:
+  user-service:
+    build:
+      context: ../../backend/microservices
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: user-service
+    container_name: python-ai-mother-user-service
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8201"]
+    ports:
+      - "8201:8201"
+    restart: unless-stopped
+
+  ai-service:
+    build:
+      context: ../../backend/microservices
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: ai-service
+    container_name: python-ai-mother-ai-service
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8202"]
+    ports:
+      - "8202:8202"
+    restart: unless-stopped
+
+  screenshot-service:
+    build:
+      context: ../../backend/microservices
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: screenshot-service
+    container_name: python-ai-mother-screenshot-service
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8204"]
+    ports:
+      - "8204:8204"
+    restart: unless-stopped
+
+  app-service:
+    build:
+      context: ../../backend/microservices
+      dockerfile: Dockerfile
+      args:
+        SERVICE_DIR: app-service
+    container_name: python-ai-mother-app-service
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8203"]
+    environment:
+      USER_SERVICE_BASE_URL: http://user-service:8201
+      AI_SERVICE_BASE_URL: http://ai-service:8202
+      SCREENSHOT_SERVICE_BASE_URL: http://screenshot-service:8204
+    depends_on:
+      - user-service
+      - ai-service
+      - screenshot-service
+    ports:
+      - "8203:8203"
+    restart: unless-stopped
