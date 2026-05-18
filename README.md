@@ -4,65 +4,6 @@
 
 本项目是一个基于 Python 的 AI 应用生成平台后端单体架构，采用 FastAPI 框架构建，支持用户通过自然语言描述生成完整的 Web 应用。项目采用模块化设计，具备完整的业务逻辑、自动化测试和监控体系。
 
-## 项目结构分析
-
-### 整体目录结构
-```
-backend/monolith/app/
-├── ai/                          # AI 服务层
-│   ├── codegen_routing_service.py    # 代码生成路由服务
-│   └── openai_compatible_service.py  # OpenAI 兼容服务
-├── api/                         # API 接口层
-│   ├── app.py                   # 应用相关接口
-│   ├── chat_history.py          # 聊天历史接口
-│   ├── health.py                # 健康检查接口
-│   ├── router.py                # 路由聚合器
-│   └── user.py                  # 用户相关接口
-├── core/                        # 核心业务逻辑层
-│   ├── ai_codegen_facade.py     # AI 代码生成门面
-│   ├── code_file_saver.py       # 代码文件保存器
-│   ├── code_gen_types.py        # 代码生成类型定义
-│   ├── code_parser.py           # 代码解析器
-│   ├── codegen_workflow.py      # 代码生成工作流
-│   ├── config.py                # 配置管理
-│   ├── edit_modes.py            # 编辑模式定义
-│   ├── error_codes.py           # 错误码定义
-│   ├── exception_handlers.py    # 异常处理器
-│   ├── exceptions.py            # 自定义异常
-│   ├── logging_config.py        # 日志配置
-│   ├── metrics.py               # 指标监控
-│   ├── middleware.py            # 中间件
-│   ├── prompt_loader.py         # 提示词加载器
-│   ├── resources.py             # 资源管理器
-│   ├── response.py              # 响应格式
-│   ├── security.py              # 安全相关
-│   └── sse.py                   # Server-Sent Events
-├── db/                          # 数据库层
-│   └── base.py                  # 数据库基类
-├── models/                      # 数据模型层
-│   ├── app.py                   # 应用模型
-│   ├── chat_history.py          # 聊天历史模型
-│   └── user.py                  # 用户模型
-├── prompts/                     # AI 提示词文件
-│   ├── codegen-html-system-prompt.txt
-│   ├── codegen-multi-file-system-prompt.txt
-│   ├── codegen-routing-system-prompt.txt
-│   └── codegen-vue-project-system-prompt.txt
-├── schemas/                     # 数据模式层
-│   ├── app.py                   # 应用模式
-│   ├── chat_history.py          # 聊天历史模式
-│   └── user.py                  # 用户模式
-├── services/                    # 业务服务层
-│   ├── app_service.py           # 应用服务
-│   ├── chat_history_service.py  # 聊天历史服务
-│   ├── rate_limit_service.py    # 限流服务
-│   ├── screenshot_service.py    # 截图服务
-│   ├── session_service.py       # 会话服务
-│   └── user_service.py          # 用户服务
-├── dependencies.py              # 依赖注入定义
-└── main.py                      # 应用入口
-```
-
 ## 业务逻辑框架
 
 ### 1. 分层架构设计
